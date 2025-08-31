@@ -76,7 +76,6 @@ config.color_scheme = nil
 config.colors = get_colors_for_appearance(wezterm.gui.get_appearance())
 
 -- Native macOS window with traffic light buttons
-config.window_decorations = "RESIZE"
 config.native_macos_fullscreen_mode = false
 
 -- Window and UI
