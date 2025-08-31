@@ -73,8 +73,8 @@ export LESS_TERMCAP_us=$'\e[1;4;31m'
 
 # Aliases
 alias dotfiles='cd $DOTFILES'
-alias zshconfig='vim ~/.zshrc'
-alias weztermconfig='vim ~/.config/wezterm/wezterm.lua'
+alias zshconfig='nvim ~/.zshrc'
+alias weztermconfig='nvim ~/.config/wezterm/wezterm.lua'
 
 mkcd() { mkdir -p "$1" && cd "$1" }
 
@@ -84,3 +84,4 @@ precmd() { vcs_info }
 zstyle ':vcs_info:git:*' formats ' (%b)'
 setopt PROMPT_SUBST
 PROMPT='%F{blue}%~%f%F{red}${vcs_info_msg_0_}%f $ '
+export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
