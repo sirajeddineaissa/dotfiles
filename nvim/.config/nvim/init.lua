@@ -39,6 +39,35 @@ end
 
 vim.opt.background = detect_os_theme()
 
+-- Auto-detect theme changes when focus returns to nvim
+local function reload_theme_if_changed()
+	local current_bg = vim.opt.background:get()
+	local detected_bg = detect_os_theme()
+	
+	if current_bg ~= detected_bg then
+		vim.opt.background = detected_bg
+		if pcall(require, "tokyonight") then
+			require("tokyonight").setup({
+				style = detected_bg == "light" and "day" or "night",
+				transparent = false,
+				terminal_colors = true,
+				styles = {
+					comments = { italic = true },
+					keywords = { italic = true },
+				},
+			})
+			vim.cmd.colorscheme("tokyonight")
+		end
+	end
+end
+
+-- Check theme when nvim gains focus
+vim.api.nvim_create_autocmd("FocusGained", {
+	desc = "Auto-detect OS theme changes",
+	group = vim.api.nvim_create_augroup("theme-sync", { clear = true }),
+	callback = reload_theme_if_changed,
+})
+
 -- Sync clipboard with OS
 vim.schedule(function()
 	vim.opt.clipboard = "unnamedplus"
