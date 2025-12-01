@@ -7,6 +7,7 @@ My macOS development environment. Fast shell, modern terminal, clean editor setu
 - **zsh** - Optimized config with autosuggestions and syntax highlighting
 - **WezTerm** - Terminal with native macOS controls and custom theme
 - **Neovim** - Text editor config
+- **Hammerspoon** - Automation tool that interacts with MacOS APIs
 - **mise** - Version manager
 - **fzf** - Fuzzy finder for files and command history
 
