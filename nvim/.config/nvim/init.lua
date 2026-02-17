@@ -43,7 +43,7 @@ vim.opt.background = detect_os_theme()
 local function reload_theme_if_changed()
 	local current_bg = vim.opt.background:get()
 	local detected_bg = detect_os_theme()
-	
+
 	if current_bg ~= detected_bg then
 		vim.opt.background = detected_bg
 		if pcall(require, "tokyonight") then
@@ -84,7 +84,7 @@ vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus right" })
 vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus down" })
 vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus up" })
 
--- Buffer navigation (updated for BufferLine)
+-- Buffer navigation
 vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<CR>", { desc = "Previous buffer" })
 vim.keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "<leader>bd", "<cmd>bdelete<CR>", { desc = "Close buffer" })
@@ -243,58 +243,54 @@ require("lazy").setup({
 
 	-- Fuzzy finder
 	{
-		"nvim-telescope/telescope.nvim",
+		"ibhagwan/fzf-lua",
+		dependencies = { "nvim-tree/nvim-web-devicons" },
 		event = "VimEnter",
-		branch = "0.1.x",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			{
-				"nvim-telescope/telescope-fzf-native.nvim",
-				build = "make",
-				cond = function()
-					return vim.fn.executable("make") == 1
-				end,
-			},
-			{ "nvim-telescope/telescope-ui-select.nvim" },
-			{ "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
-		},
 		config = function()
-			require("telescope").setup({
-				defaults = {
-					file_ignore_patterns = {
-						"node_modules",
-						"dist",
-						"build",
-						".git",
-						"target",
-						"vendor",
+			local fzf = require("fzf-lua")
+
+			fzf.setup({
+				fzf_colors = true,
+				winopts = {
+					height = 0.85,
+					width = 0.80,
+					preview = {
+						default = "bat",
+						layout = "flex",
+						flip_columns = 100,
 					},
 				},
-				extensions = {
-					["ui-select"] = {
-						require("telescope.themes").get_dropdown(),
-					},
+				files = {
+					fd_opts = "--color=never --hidden --type f --type l"
+						.. " --exclude .git"
+						.. " --exclude node_modules"
+						.. " --exclude dist"
+						.. " --exclude build"
+						.. " --exclude target"
+						.. " --exclude vendor",
+				},
+				grep = {
+					rg_opts = "--column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e",
+					rg_glob = true,
+					hidden = false,
 				},
 			})
 
-			pcall(require("telescope").load_extension, "fzf")
-			pcall(require("telescope").load_extension, "ui-select")
+			fzf.register_ui_select()
 
-			local builtin = require("telescope.builtin")
-			vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
-			vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-			vim.keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
-			vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch [W]ord" })
-			vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
-			vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
-			vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "Find buffers" })
+			-- Keymaps
+			vim.keymap.set("n", "<leader>sh", fzf.help_tags, { desc = "[S]earch [H]elp" })
+			vim.keymap.set("n", "<leader>sk", fzf.keymaps, { desc = "[S]earch [K]eymaps" })
+			vim.keymap.set("n", "<leader>sf", fzf.files, { desc = "[S]earch [F]iles" })
+			vim.keymap.set("n", "<leader>sw", fzf.grep_cword, { desc = "[S]earch [W]ord" })
+			vim.keymap.set("n", "<leader>sg", fzf.live_grep, { desc = "[S]earch by [G]rep" })
+			vim.keymap.set("n", "<leader>sd", fzf.diagnostics_workspace, { desc = "[S]earch [D]iagnostics" })
+			vim.keymap.set("n", "<leader>sr", fzf.resume, { desc = "[S]earch [R]esume last" })
+			vim.keymap.set("n", "<leader><leader>", fzf.buffers, { desc = "Find buffers" })
 
 			-- Search Neovim config files
 			vim.keymap.set("n", "<leader>sn", function()
-				builtin.find_files({
-					cwd = vim.fn.stdpath("config"),
-					follow = true,
-				})
+				fzf.files({ cwd = vim.fn.stdpath("config") })
 			end, { desc = "[S]earch [N]eovim files" })
 		end,
 	},
@@ -323,14 +319,16 @@ require("lazy").setup({
 			vim.api.nvim_create_autocmd("LspAttach", {
 				group = vim.api.nvim_create_augroup("lsp-attach", { clear = true }),
 				callback = function(event)
+					local fzf = require("fzf-lua")
 					local map = function(keys, func, desc)
 						vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
 					end
 
-					map("gd", require("telescope.builtin").lsp_definitions, "[G]oto [D]efinition")
-					map("gr", require("telescope.builtin").lsp_references, "[G]oto [R]eferences")
+					map("gd", fzf.lsp_definitions, "[G]oto [D]efinition")
+					map("gr", fzf.lsp_references, "[G]oto [R]eferences")
+					map("gi", fzf.lsp_implementations, "[G]oto [I]mplementation")
 					map("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
-					map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
+					map("<leader>ca", fzf.lsp_code_actions, "[C]ode [A]ction")
 				end,
 			})
 
